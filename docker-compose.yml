@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  # Database Service (PostgreSQL 16)
+  postgres:
+    image: postgres:16-alpine
+    container_name: emergency-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: emergencydb
+      POSTGRES_USER: emergency_user
+      POSTGRES_PASSWORD: emergency_secure_password_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U emergency_user -d emergencydb"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Spring Boot Backend Service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: emergency-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DATABASE_URL: jdbc:postgresql://postgres:5432/emergencydb
+      SPRING_DATASOURCE_USERNAME: emergency_user
+      SPRING_DATASOURCE_PASSWORD: emergency_secure_password_dev
+      PORT: 8080
+      CORS_ALLOWED_ORIGINS: http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173
+    ports:
+      - "8080:8080"
+
+  # React + Vite Frontend (Nginx static bundle)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: emergency-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "3000:80"
+
+volumes:
+  postgres_data:
