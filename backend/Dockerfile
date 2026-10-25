@@ -1,10 +1,9 @@
 # Stage 1: Build application with Maven
-FROM eclipse-temurin:21-jdk-alpine AS builder
+FROM maven:3.9-eclipse-temurin-21-alpine AS builder
 WORKDIR /app
 
-# Copy Maven descriptor and download dependencies
+# Copy Maven descriptor
 COPY pom.xml .
-RUN ./mvnw dependency:go-offline 2>/dev/null || true
 
 # Copy source code and package application
 COPY src ./src
