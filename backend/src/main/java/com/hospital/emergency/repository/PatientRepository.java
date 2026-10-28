@@ -6,6 +6,7 @@ import com.hospital.emergency.model.Severity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -15,7 +16,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface PatientRepository extends JpaRepository<Patient, Long> {
+public interface PatientRepository extends JpaRepository<Patient, Long>, JpaSpecificationExecutor<Patient> {
 
     Optional<Patient> findByPatientIdentifier(String patientIdentifier);
 
@@ -29,15 +30,6 @@ public interface PatientRepository extends JpaRepository<Patient, Long> {
 
     @Query("SELECT MAX(p.arrivalSequenceNumber) FROM Patient p")
     Long findMaxArrivalSequenceNumber();
-
-    @Query("SELECT p FROM Patient p WHERE " +
-           "(:search IS NULL OR LOWER(p.fullName) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(p.patientIdentifier) LIKE LOWER(CONCAT('%', :search, '%'))) AND " +
-           "(:severity IS NULL OR p.severity = :severity) AND " +
-           "(:status IS NULL OR p.status = :status)")
-    Page<Patient> findWithFilters(@Param("search") String search,
-                                 @Param("severity") Severity severity,
-                                 @Param("status") PatientStatus status,
-                                 Pageable pageable);
 
     @Query("SELECT AVG(p.actualWaitDurationMinutes) FROM Patient p WHERE p.actualWaitDurationMinutes IS NOT NULL")
     Double findAverageWaitTimeMinutes();

@@ -45,6 +45,16 @@ export const App: React.FC = () => {
         isConnected={isConnected}
       />
 
+      {/* Cloud Service Cold-Start Notification */}
+      {!isConnected && (
+        <div className="bg-amber-600 text-white text-xs px-4 py-2.5 text-center font-medium shadow-xs flex items-center justify-center space-x-2">
+          <span className="w-2.5 h-2.5 rounded-full bg-white animate-pulse inline-block"></span>
+          <span>
+            <strong>Connecting to Emergency Queue Service:</strong> If the app has been idle, Render free tier takes ~45–60s to wake the server from cold sleep. Please wait a moment while it initializes...
+          </span>
+        </div>
+      )}
+
       {/* Main Content Viewport */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {currentTab === 'dashboard' && (

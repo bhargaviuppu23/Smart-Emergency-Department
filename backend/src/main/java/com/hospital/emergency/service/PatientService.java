@@ -17,12 +17,15 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
+import jakarta.persistence.criteria.Predicate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -108,9 +111,29 @@ public class PatientService {
         Sort sort = sortDir.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, Math.min(size, 100), sort);
 
-        String searchParam = (search != null && !search.trim().isEmpty()) ? search.trim() : null;
+        Specification<Patient> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
 
-        return patientRepository.findWithFilters(searchParam, severity, status, pageable)
+            if (search != null && !search.trim().isEmpty()) {
+                String pattern = "%" + search.trim().toLowerCase() + "%";
+                predicates.add(cb.or(
+                    cb.like(cb.lower(root.get("fullName")), pattern),
+                    cb.like(cb.lower(root.get("patientIdentifier")), pattern)
+                ));
+            }
+
+            if (severity != null) {
+                predicates.add(cb.equal(root.get("severity"), severity));
+            }
+
+            if (status != null) {
+                predicates.add(cb.equal(root.get("status"), status));
+            }
+
+            return predicates.isEmpty() ? cb.conjunction() : cb.and(predicates.toArray(new Predicate[0]));
+        };
+
+        return patientRepository.findAll(spec, pageable)
                 .map(p -> {
                     Integer position = p.getStatus() == PatientStatus.WAITING ? calculateQueuePosition(p.getId()) : null;
                     return PatientResponseDto.fromEntity(p, position);
