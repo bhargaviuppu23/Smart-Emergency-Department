@@ -26,28 +26,37 @@ export class ApiError extends Error {
   }
 }
 
-async function request<T>(endpoint: string, options?: RequestInit): Promise<T> {
+async function request<T>(endpoint: string, options?: RequestInit, retries = 2): Promise<T> {
   const url = `${API_BASE}${endpoint}`;
   const headers = {
     'Content-Type': 'application/json',
     ...(options?.headers || {}),
   };
 
-  const response = await fetch(url, { ...options, headers });
+  try {
+    const response = await fetch(url, { ...options, headers });
 
-  if (response.status === 204) {
-    return null as T;
+    if (response.status === 204) {
+      return null as T;
+    }
+
+    const data = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      const errorMsg = data?.message || data?.error || `Request failed with status ${response.status}`;
+      const details = data?.details;
+      throw new ApiError(response.status, errorMsg, details);
+    }
+
+    return data as T;
+  } catch (err: any) {
+    // If it's a network error or 5xx while server is waking up, retry up to 2 times
+    if (retries > 0 && !(err instanceof ApiError && err.status >= 400 && err.status < 500)) {
+      await new Promise((resolve) => setTimeout(resolve, 2500));
+      return request<T>(endpoint, options, retries - 1);
+    }
+    throw err;
   }
-
-  const data = await response.json().catch(() => null);
-
-  if (!response.ok) {
-    const errorMsg = data?.message || data?.error || `Request failed with status ${response.status}`;
-    const details = data?.details;
-    throw new ApiError(response.status, errorMsg, details);
-  }
-
-  return data as T;
 }
 
 export const api = {

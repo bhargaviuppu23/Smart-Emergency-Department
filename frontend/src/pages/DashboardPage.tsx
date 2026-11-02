@@ -140,6 +140,23 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate, onRefr
         </div>
       )}
 
+      {!summary && !loading && (
+        <div className="p-4 bg-sky-50 border border-sky-200 text-sky-800 rounded-xl flex items-center justify-between shadow-2xs">
+          <div className="flex items-center space-x-3">
+            <div className="w-2.5 h-2.5 rounded-full bg-sky-500 animate-pulse" />
+            <span className="text-xs font-medium">
+              Connecting to backend service... If the cloud server was in cold sleep, click <strong>Refresh</strong> once ready.
+            </span>
+          </div>
+          <button
+            onClick={() => loadData()}
+            className="px-3 py-1 bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold rounded-lg shadow-xs transition-colors"
+          >
+            Refresh
+          </button>
+        </div>
+      )}
+
       {/* Primary KPI Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
         <StatCard

@@ -30,9 +30,9 @@ export const App: React.FC = () => {
 
   useEffect(() => {
     refreshCounts();
-    const interval = setInterval(refreshCounts, 10000);
+    const interval = setInterval(refreshCounts, isConnected ? 10000 : 4000);
     return () => clearInterval(interval);
-  }, []);
+  }, [isConnected]);
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-800">
@@ -47,11 +47,17 @@ export const App: React.FC = () => {
 
       {/* Cloud Service Cold-Start Notification */}
       {!isConnected && (
-        <div className="bg-amber-600 text-white text-xs px-4 py-2.5 text-center font-medium shadow-xs flex items-center justify-center space-x-2">
-          <span className="w-2.5 h-2.5 rounded-full bg-white animate-pulse inline-block"></span>
+        <div className="bg-amber-600 text-white text-xs px-4 py-3 text-center font-medium shadow-md flex items-center justify-center space-x-3 transition-all duration-300">
+          <span className="w-2.5 h-2.5 rounded-full bg-white animate-ping inline-block"></span>
           <span>
-            <strong>Connecting to Emergency Queue Service:</strong> If the app has been idle, Render free tier takes ~45–60s to wake the server from cold sleep. Please wait a moment while it initializes...
+            <strong>Cloud Backend is waking up:</strong> On Render free tier, the Java backend sleeps after 15m of inactivity. It takes ~45–60s on the first request to boot. <em>Live data will appear automatically once ready...</em>
           </span>
+          <button
+            onClick={() => refreshCounts()}
+            className="ml-2 px-2.5 py-1 bg-white text-amber-800 text-[11px] font-bold rounded hover:bg-amber-50 transition-colors shadow-xs"
+          >
+            Check Now
+          </button>
         </div>
       )}
 
